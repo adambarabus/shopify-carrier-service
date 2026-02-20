@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Carrier Service Admin</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #0e0e0e; --surface: #161616; --surface-2: #1e1e1e;
+      --border: #2a2a2a; --border-focus: #555; --text: #e8e8e8;
+      --text-muted: #666; --text-dim: #999; --accent: #c8f560;
+      --accent-dim: #a8d040; --danger: #ff5555; --success: #50fa7b;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; line-height: 1.5; }
+    #login-screen { display: flex; align-items: center; justify-content: center; min-height: 100vh; padding: 2rem; }
+    .login-card { width: 100%; max-width: 360px; }
+    .brand { font-family: 'DM Mono', monospace; font-size: 0.7rem; letter-spacing: 0.2em; text-transform: uppercase; color: var(--text-muted); margin-bottom: 2.5rem; }
+    .login-card h1 { font-size: 1.6rem; font-weight: 500; margin-bottom: 0.4rem; }
+    .login-card p { color: var(--text-dim); font-size: 0.9rem; margin-bottom: 2rem; }
+    #admin-screen { display: none; }
+    header { border-bottom: 1px solid var(--border); padding: 1rem 2rem; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; background: var(--bg); z-index: 10; }
+    header .brand { margin-bottom: 0; }
+    .header-title { font-size: 0.95rem; font-weight: 500; }
+    .header-right { display: flex; align-items: center; gap: 1rem; }
+    .status-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--text-muted); display: inline-block; }
+    .status-dot.ok { background: var(--success); } .status-dot.error { background: var(--danger); }
+    main { max-width: 900px; margin: 0 auto; padding: 2.5rem 2rem; display: grid; gap: 2rem; }
+    .card { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+    .card-header { padding: 1.2rem 1.5rem; border-bottom: 1px solid var(--border); }
+    .card-header h2 { font-size: 0.85rem; font-weight: 500; letter-spacing: 0.05em; text-transform: uppercase; color: var(--text-dim); }
+    .card-body { padding: 1.5rem; }
+    .section-desc { font-size: 0.82rem; color: var(--text-muted); margin-bottom: 1.25rem; line-height: 1.6; }
+
+    /* Zone blocks */
+    .zone-block { border: 1px solid var(--border); border-radius: 6px; margin-bottom: 1rem; overflow: hidden; }
+    .zone-block:last-child { margin-bottom: 0; }
+    .zone-title { font-family: 'DM Mono', monospace; font-size: 0.72rem; letter-spacing: 0.15em; text-transform: uppercase; color: var(--accent); padding: 0.6rem 1rem; background: var(--surface-2); border-bottom: 1px solid var(--border); }
+
+    .field { display: grid; grid-template-columns: 200px 1fr; align-items: center; gap: 1rem; padding: 0.65rem 1rem; border-bottom: 1px solid var(--border); }
+    .field:last-child { border-bottom: none; }
+    .field-label { font-size: 0.875rem; }
+    .field-label span { display: block; font-size: 0.72rem; color: var(--text-muted); margin-top: 0.1rem; font-family: 'DM Mono', monospace; }
+    .field-input { display: flex; align-items: center; gap: 0.5rem; justify-content: flex-end; }
+    .prefix { font-family: 'DM Mono', monospace; font-size: 0.85rem; color: var(--text-muted); white-space: nowrap; }
+
+    input[type="text"], input[type="password"], input[type="number"] {
+      background: var(--surface-2); border: 1px solid var(--border); border-radius: 5px;
+      color: var(--text); font-family: 'DM Mono', monospace; font-size: 0.875rem;
+      padding: 0.45rem 0.75rem; width: 120px; text-align: right;
+      transition: border-color 0.15s; -moz-appearance: textfield;
+    }
+    input[type="password"] { width: 100%; text-align: left; font-family: 'DM Sans', sans-serif; }
+    input.wide { width: 340px; text-align: left; }
+    input.full { width: 100%; text-align: left; }
+    input:focus { outline: none; border-color: var(--border-focus); }
+    input::-webkit-outer-spin-button, input::-webkit-inner-spin-button { -webkit-appearance: none; }
+
+    /* Packaging uses simpler layout */
+    .pkg-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0; }
+    .pkg-grid .field { grid-template-columns: 1fr auto; }
+
+    .btn { font-family: 'DM Sans', sans-serif; font-size: 0.875rem; font-weight: 500; padding: 0.55rem 1.25rem; border-radius: 5px; border: none; cursor: pointer; transition: all 0.15s; }
+    .btn-primary { background: var(--accent); color: #0e0e0e; }
+    .btn-primary:hover { background: var(--accent-dim); }
+    .btn-ghost { background: transparent; color: var(--text-muted); border: 1px solid var(--border); font-size: 0.78rem; padding: 0.35rem 0.8rem; }
+    .btn-ghost:hover { border-color: var(--border-focus); color: var(--text); }
+    .btn-full { width: 100%; }
+    .card-footer { padding: 1rem 1.5rem; border-top: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
+    .save-status { font-size: 0.8rem; color: var(--text-muted); font-family: 'DM Mono', monospace; min-height: 1.2em; }
+    .save-status.success { color: var(--success); } .save-status.error { color: var(--danger); }
+    #toast { position: fixed; bottom: 2rem; right: 2rem; background: var(--surface-2); border: 1px solid var(--border); border-radius: 6px; padding: 0.75rem 1.25rem; font-size: 0.85rem; font-family: 'DM Mono', monospace; opacity: 0; transform: translateY(8px); transition: all 0.2s; pointer-events: none; z-index: 100; }
+    #toast.show { opacity: 1; transform: translateY(0); }
+    #toast.success { border-color: var(--success); color: var(--success); } #toast.error { border-color: var(--danger); color: var(--danger); }
+    .loading { text-align: center; padding: 3rem; color: var(--text-muted); font-family: 'DM Mono', monospace; font-size: 0.8rem; letter-spacing: 0.1em; animation: pulse 1.5s ease infinite; }
+    @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+  </style>
+</head>
+<body>
+
+<div id="login-screen">
+  <div class="login-card">
+    <div class="brand">Demob Happy / Carrier Service</div>
+    <h1>Admin</h1>
+    <p>Enter your password to continue.</p>
+    <div style="display:grid;gap:0.75rem;">
+      <input type="password" id="password-input" placeholder="Password" autocomplete="current-password">
+      <button class="btn btn-primary btn-full" onclick="login()">Sign in</button>
+      <p id="login-error" style="font-size:0.8rem;color:var(--danger);text-align:center;min-height:1.2em;"></p>
+    </div>
+  </div>
+</div>
+
+<div id="admin-screen">
+  <header>
+    <div>
+      <div class="brand">Demob Happy / Carrier Service</div>
+      <div class="header-title">Configuration</div>
+    </div>
+    <div class="header-right">
+      <span class="status-dot" id="status-dot"></span>
+      <span id="status-text" style="font-size:0.8rem;color:var(--text-muted);font-family:'DM Mono',monospace;"></span>
+      <button class="btn btn-ghost" onclick="logout()">Sign out</button>
+    </div>
+  </header>
+  <main id="main-content"><div class="loading">Loading configuration…</div></main>
+</div>
+
+<div id="toast"></div>
+
+<script>
+const ADMIN_PASSWORD = "__ADMIN_PASSWORD__";
+const EDGE_CONFIG_URL = "__EDGE_CONFIG_URL__";
+const EDGE_CONFIG_ID = "__EDGE_CONFIG_ID__";
+const VERCEL_API_TOKEN = "__VERCEL_API_TOKEN__";
+
+function login() {
+  const val = document.getElementById("password-input").value;
+  if (val === ADMIN_PASSWORD) {
+    sessionStorage.setItem("authed", "1");
+    document.getElementById("login-screen").style.display = "none";
+    document.getElementById("admin-screen").style.display = "block";
+    loadConfig();
+  } else {
+    document.getElementById("login-error").textContent = "Incorrect password.";
+  }
+}
+function logout() { sessionStorage.removeItem("authed"); location.reload(); }
+document.getElementById("password-input").addEventListener("keydown", (e) => { if (e.key === "Enter") login(); });
+if (sessionStorage.getItem("authed")) {
+  document.getElementById("login-screen").style.display = "none";
+  document.getElementById("admin-screen").style.display = "block";
+  loadConfig();
+}
+
+async function readEdgeConfig(key) {
+  const url = new URL(EDGE_CONFIG_URL);
+  const res = await fetch(`${url.origin}${url.pathname}/item/${key}${url.search}`);
+  if (!res.ok) return null;
+  return res.json();
+}
+async function writeEdgeConfig(items) {
+  const res = await fetch(`https://api.vercel.com/v1/edge-config/${EDGE_CONFIG_ID}/items`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json", "Authorization": `Bearer ${VERCEL_API_TOKEN}` },
+    body: JSON.stringify({ items }),
+  });
+  if (!res.ok) throw new Error(await res.text());
+  return res.json();
+}
+
+const DEFAULTS = {
+  shipping: {
+    UK: { flat: 400, label: "Standard Shipping", description: "" },
+    EU: { light: 600, heavy: 850, threshold: 350, label: "Standard Shipping", description: "" },
+    INTERNATIONAL: { light: 1200, heavy: 1500, threshold: 350, label: "Standard Shipping", description: "" },
+  },
+  surcharges: {
+    UK: { amount: 0, label: "Standard Shipping (Oversized packaging required)", description: "Your order contains items that require a larger box." },
+    EU: { amount: 0, label: "Standard Shipping (Oversized packaging required)", description: "Your order contains items that require a larger box." },
+    INTERNATIONAL: { amount: 0, label: "Standard Shipping (Oversized packaging required)", description: "Your order contains items that require a larger box." },
+  },
+  packaging: { vinyl_mailer: 185, can_box: 185, cd_mailer: 50, tee_packet: 20 },
+};
+
+async function loadConfig() {
+  try {
+    const config = await readEdgeConfig("admin_config");
+    const cfg = config ? deepMerge(DEFAULTS, config) : DEFAULTS;
+    document.getElementById("status-dot").className = "status-dot ok";
+    document.getElementById("status-text").textContent = "connected";
+    renderAdmin(cfg);
+  } catch (err) {
+    document.getElementById("status-dot").className = "status-dot error";
+    document.getElementById("status-text").textContent = "error";
+    document.getElementById("main-content").innerHTML = `<div class="loading" style="color:var(--danger)">Failed to load: ${err.message}</div>`;
+  }
+}
+
+function deepMerge(defaults, overrides) {
+  const result = Object.assign({}, defaults);
+  for (const key of Object.keys(overrides)) {
+    if (overrides[key] && typeof overrides[key] === 'object' && !Array.isArray(overrides[key])) {
+      result[key] = deepMerge(defaults[key] || {}, overrides[key]);
+    } else {
+      result[key] = overrides[key];
+    }
+  }
+  return result;
+}
+
+function f(pence) { return (pence / 100).toFixed(2); }
+function p(pounds) { return Math.round(parseFloat(pounds) * 100); }
+function v(id) { return document.getElementById(id).value; }
+function vi(id) { return parseInt(document.getElementById(id).value); }
+
+function renderAdmin(cfg) {
+  const s = cfg.shipping;
+  const sc = cfg.surcharges;
+  const pk = cfg.packaging;
+
+  document.getElementById("main-content").innerHTML = `
+
+    <!-- Shipping Rates -->
+    <div class="card">
+      <div class="card-header"><h2>Shipping Rates</h2></div>
+      <div class="card-body">
+        <p class="section-desc">Standard rates returned when no packaging surcharge applies. Label and description are shown to the customer at checkout. EU and International rates are weight-tiered.</p>
+
+        <div class="zone-block">
+          <div class="zone-title">UK</div>
+          <div class="field"><div class="field-label">Flat rate</div><div class="field-input"><span class="prefix">£</span><input type="number" id="uk_flat" value="${f(s.UK.flat)}" step="0.01" min="0"></div></div>
+          <div class="field"><div class="field-label">Label</div><div class="field-input"><input type="text" id="uk_label" value="${s.UK.label}" class="wide"></div></div>
+          <div class="field"><div class="field-label">Description<span>optional</span></div><div class="field-input"><input type="text" id="uk_desc" value="${s.UK.description || ''}" class="wide" placeholder="Leave blank for none"></div></div>
+        </div>
+
+        <div class="zone-block">
+          <div class="zone-title">EU</div>
+          <div class="field"><div class="field-label">Light rate<span>below threshold</span></div><div class="field-input"><span class="prefix">£</span><input type="number" id="eu_light" value="${f(s.EU.light)}" step="0.01" min="0"></div></div>
+          <div class="field"><div class="field-label">Heavy rate<span>above threshold</span></div><div class="field-input"><span class="prefix">£</span><input type="number" id="eu_heavy" value="${f(s.EU.heavy)}" step="0.01" min="0"></div></div>
+          <div class="field"><div class="field-label">Weight threshold<span>grams</span></div><div class="field-input"><input type="number" id="eu_threshold" value="${s.EU.threshold}" step="1" min="0"><span class="prefix">g</span></div></div>
+          <div class="field"><div class="field-label">Label</div><div class="field-input"><input type="text" id="eu_label" value="${s.EU.label}" class="wide"></div></div>
+          <div class="field"><div class="field-label">Description<span>optional</span></div><div class="field-input"><input type="text" id="eu_desc" value="${s.EU.description || ''}" class="wide" placeholder="Leave blank for none"></div></div>
+        </div>
+
+        <div class="zone-block">
+          <div class="zone-title">International</div>
+          <div class="field"><div class="field-label">Light rate<span>below threshold</span></div><div class="field-input"><span class="prefix">£</span><input type="number" id="intl_light" value="${f(s.INTERNATIONAL.light)}" step="0.01" min="0"></div></div>
+          <div class="field"><div class="field-label">Heavy rate<span>above threshold</span></div><div class="field-input"><span class="prefix">£</span><input type="number" id="intl_heavy" value="${f(s.INTERNATIONAL.heavy)}" step="0.01" min="0"></div></div>
+          <div class="field"><div class="field-label">Weight threshold<span>grams</span></div><div class="field-input"><input type="number" id="intl_threshold" value="${s.INTERNATIONAL.threshold}" step="1" min="0"><span class="prefix">g</span></div></div>
+          <div class="field"><div class="field-label">Label</div><div class="field-input"><input type="text" id="intl_label" value="${s.INTERNATIONAL.label}" class="wide"></div></div>
+          <div class="field"><div class="field-label">Description<span>optional</span></div><div class="field-input"><input type="text" id="intl_desc" value="${s.INTERNATIONAL.description || ''}" class="wide" placeholder="Leave blank for none"></div></div>
+        </div>
+
+      </div>
+      <div class="card-footer"><span class="save-status" id="shipping-status"></span><button class="btn btn-primary" onclick="saveAll('shipping-status')">Save rates</button></div>
+    </div>
+
+    <!-- Surcharges -->
+    <div class="card">
+      <div class="card-header"><h2>Oversized Packaging Surcharge</h2></div>
+      <div class="card-body">
+        <p class="section-desc">Applied when a vinyl record and a can are in the same order. Replaces all normal shipping options at checkout. Label and description can be configured per zone.</p>
+
+        <div class="zone-block">
+          <div class="zone-title">UK</div>
+          <div class="field"><div class="field-label">Amount</div><div class="field-input"><span class="prefix">£</span><input type="number" id="sc_uk_amount" value="${f(sc.UK.amount)}" step="0.01" min="0"></div></div>
+          <div class="field"><div class="field-label">Label</div><div class="field-input"><input type="text" id="sc_uk_label" value="${sc.UK.label}" class="wide"></div></div>
+          <div class="field"><div class="field-label">Description<span>optional</span></div><div class="field-input"><input type="text" id="sc_uk_desc" value="${sc.UK.description || ''}" class="wide" placeholder="Leave blank for none"></div></div>
+        </div>
+
+        <div class="zone-block">
+          <div class="zone-title">EU</div>
+          <div class="field"><div class="field-label">Amount</div><div class="field-input"><span class="prefix">£</span><input type="number" id="sc_eu_amount" value="${f(sc.EU.amount)}" step="0.01" min="0"></div></div>
+          <div class="field"><div class="field-label">Label</div><div class="field-input"><input type="text" id="sc_eu_label" value="${sc.EU.label}" class="wide"></div></div>
+          <div class="field"><div class="field-label">Description<span>optional</span></div><div class="field-input"><input type="text" id="sc_eu_desc" value="${sc.EU.description || ''}" class="wide" placeholder="Leave blank for none"></div></div>
+        </div>
+
+        <div class="zone-block">
+          <div class="zone-title">International</div>
+          <div class="field"><div class="field-label">Amount</div><div class="field-input"><span class="prefix">£</span><input type="number" id="sc_intl_amount" value="${f(sc.INTERNATIONAL.amount)}" step="0.01" min="0"></div></div>
+          <div class="field"><div class="field-label">Label</div><div class="field-input"><input type="text" id="sc_intl_label" value="${sc.INTERNATIONAL.label}" class="wide"></div></div>
+          <div class="field"><div class="field-label">Description<span>optional</span></div><div class="field-input"><input type="text" id="sc_intl_desc" value="${sc.INTERNATIONAL.description || ''}" class="wide" placeholder="Leave blank for none"></div></div>
+        </div>
+
+      </div>
+      <div class="card-footer"><span class="save-status" id="surcharge-status"></span><button class="btn btn-primary" onclick="saveAll('surcharge-status')">Save surcharges</button></div>
+    </div>
+
+    <!-- Packaging Weights -->
+    <div class="card">
+      <div class="card-header"><h2>Packaging Weights</h2></div>
+      <div class="card-body">
+        <p class="section-desc">Weight of each packaging type in grams. Only the heaviest packaging type present in an order is added to the total shipped weight.</p>
+        <div class="field"><div class="field-label">Vinyl mailer<span>vinyl_mailer</span></div><div class="field-input"><input type="number" id="pkg_vinyl" value="${pk.vinyl_mailer}" step="1" min="0"><span class="prefix">g</span></div></div>
+        <div class="field"><div class="field-label">Can box<span>can_box</span></div><div class="field-input"><input type="number" id="pkg_can" value="${pk.can_box}" step="1" min="0"><span class="prefix">g</span></div></div>
+        <div class="field"><div class="field-label">CD mailer<span>cd_mailer</span></div><div class="field-input"><input type="number" id="pkg_cd" value="${pk.cd_mailer}" step="1" min="0"><span class="prefix">g</span></div></div>
+        <div class="field"><div class="field-label">Tee packet<span>tee_packet</span></div><div class="field-input"><input type="number" id="pkg_tee" value="${pk.tee_packet}" step="1" min="0"><span class="prefix">g</span></div></div>
+      </div>
+      <div class="card-footer"><span class="save-status" id="packaging-status"></span><button class="btn btn-primary" onclick="saveAll('packaging-status')">Save weights</button></div>
+    </div>
+
+  `;
+}
+
+function getConfig() {
+  return {
+    shipping: {
+      UK: { flat: p(v("uk_flat")), label: v("uk_label"), description: v("uk_desc") || null },
+      EU: { light: p(v("eu_light")), heavy: p(v("eu_heavy")), threshold: vi("eu_threshold"), label: v("eu_label"), description: v("eu_desc") || null },
+      INTERNATIONAL: { light: p(v("intl_light")), heavy: p(v("intl_heavy")), threshold: vi("intl_threshold"), label: v("intl_label"), description: v("intl_desc") || null },
+    },
+    surcharges: {
+      UK: { amount: p(v("sc_uk_amount")), label: v("sc_uk_label"), description: v("sc_uk_desc") || null },
+      EU: { amount: p(v("sc_eu_amount")), label: v("sc_eu_label"), description: v("sc_eu_desc") || null },
+      INTERNATIONAL: { amount: p(v("sc_intl_amount")), label: v("sc_intl_label"), description: v("sc_intl_desc") || null },
+    },
+    packaging: {
+      vinyl_mailer: vi("pkg_vinyl"), can_box: vi("pkg_can"),
+      cd_mailer: vi("pkg_cd"), tee_packet: vi("pkg_tee"),
+    },
+  };
+}
+
+async function saveAll(statusId) {
+  const statusEl = document.getElementById(statusId);
+  statusEl.textContent = "Saving…";
+  statusEl.className = "save-status";
+  try {
+    const cfg = getConfig();
+    await writeEdgeConfig([{ operation: "upsert", key: "admin_config", value: cfg }]);
+    statusEl.textContent = "Saved ✓";
+    statusEl.className = "save-status success";
+    showToast("Changes saved", "success");
+    setTimeout(() => { statusEl.textContent = ""; statusEl.className = "save-status"; }, 3000);
+  } catch (err) {
+    statusEl.textContent = "Error — " + err.message;
+    statusEl.className = "save-status error";
+    showToast("Save failed", "error");
+  }
+}
+
+let toastTimer;
+function showToast(msg, type) {
+  const t = document.getElementById("toast");
+  t.textContent = msg; t.className = "show " + type;
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => { t.className = ""; }, 2500);
+}
+</script>
+</body>
+</html>

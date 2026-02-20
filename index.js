@@ -2,6 +2,8 @@ require("dotenv").config();
 
 const express = require("express");
 const crypto = require("crypto");
+const path = require("path");
+const fs = require("fs");
 const { calculateRates } = require("./lib/rates");
 const { fetchProduct, gidToId } = require("./lib/shopify");
 const cache = require("./lib/cache");
@@ -16,6 +18,29 @@ app.use(
   })
 );
 
+// ---- Admin UI ----
+app.get("/admin", (_req, res) => {
+  const adminPassword = process.env.ADMIN_PASSWORD;
+  const edgeConfigUrl = process.env.EDGE_CONFIG;
+  const edgeConfigId = process.env.EDGE_CONFIG_ID;
+  const vercelApiToken = process.env.VERCEL_API_TOKEN;
+
+  if (!adminPassword) {
+    return res.status(500).send("ADMIN_PASSWORD environment variable not set.");
+  }
+
+  let html = fs.readFileSync(path.join(__dirname, "admin", "index.html"), "utf8");
+  html = html
+    .replace("__ADMIN_PASSWORD__", adminPassword)
+    .replace("__EDGE_CONFIG_URL__", edgeConfigUrl || "")
+    .replace("__EDGE_CONFIG_ID__", edgeConfigId || "")
+    .replace("__VERCEL_API_TOKEN__", vercelApiToken || "");
+
+  res.setHeader("Content-Type", "text/html");
+  res.send(html);
+});
+
+// ---- Health ----
 app.get("/health", async (_req, res) => {
   res.json({
     status: "ok",
@@ -24,6 +49,7 @@ app.get("/health", async (_req, res) => {
   });
 });
 
+// ---- Carrier ----
 app.post("/carrier", async (req, res) => {
   try {
     const rates = await calculateRates(req.body);
@@ -34,6 +60,7 @@ app.post("/carrier", async (req, res) => {
   }
 });
 
+// ---- Webhooks ----
 app.post("/webhooks/products", async (req, res) => {
   const secret = process.env.SHOPIFY_CLIENT_SECRET;
   const hmacHeader = req.headers["x-shopify-hmac-sha256"];

@@ -26,7 +26,6 @@ app.get("/health", async (_req, res) => {
 
 app.post("/carrier", async (req, res) => {
   try {
-    console.log("Carrier raw payload:", JSON.stringify(req.body));
     const rates = await calculateRates(req.body);
     return res.json({ rates });
   } catch (err) {
@@ -39,10 +38,7 @@ app.post("/webhooks/products", async (req, res) => {
   const secret = process.env.SHOPIFY_CLIENT_SECRET;
   const hmacHeader = req.headers["x-shopify-hmac-sha256"];
 
-  // Log verification details for debugging
-  if (!hmacHeader) {
-    console.log("Webhook received: no HMAC header present");
-  } else if (secret) {
+  if (secret && hmacHeader) {
     const digest = crypto
       .createHmac("sha256", secret)
       .update(req.rawBody)
@@ -51,23 +47,18 @@ app.post("/webhooks/products", async (req, res) => {
       Buffer.from(digest),
       Buffer.from(hmacHeader)
     );
-    console.log(`Webhook HMAC verification: ${valid ? "passed" : "FAILED"}`);
+    if (!valid) return res.status(401).send("Unauthorised");
   }
 
-  // Temporarily allow all webhooks through for debugging
   res.status(200).send("OK");
 
   try {
     const productId = String(req.body.id);
     const productGid = `gid://shopify/Product/${productId}`;
-
-    console.log(`Processing webhook for product ${productId}`);
-
     const product = await fetchProduct(productGid);
 
     if (!product) {
       await cache.deleteProduct(productId);
-      console.log(`Product ${productId} removed from cache.`);
       return;
     }
 
@@ -79,9 +70,9 @@ app.post("/webhooks/products", async (req, res) => {
       await cache.upsertVariant(variantId, productId);
     }
 
-    console.log(`Product ${productId} cached successfully (box_type: ${boxType})`);
+    console.log(`Product ${productId} cached (box_type: ${boxType})`);
   } catch (err) {
-    console.error("Webhook processing error:", err.message);
+    console.error("Webhook error:", err.message);
   }
 });
 

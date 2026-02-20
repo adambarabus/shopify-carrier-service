@@ -42,9 +42,9 @@ app.get("/health", (_req, res) => {
 // Shopify calls this endpoint at checkout for every customer
 // who reaches the shipping step.
 // ============================================================
-app.post("/carrier", (req, res) => {
+app.post("/carrier", async (req, res) => {
   try {
-    const rates = calculateRates(req.body);
+    const rates = await calculateRates(req.body);
 
     // If no surcharge applies, return empty rates array so Shopify
     // falls back to its own weight-based rates.

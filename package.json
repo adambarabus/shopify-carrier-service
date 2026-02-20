@@ -1,0 +1,20 @@
+{
+  "name": "shopify-carrier-service",
+  "version": "1.0.0",
+  "description": "Shopify Carrier Service — Oversized Packaging Surcharge",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "sync": "node scripts/sync.js",
+    "dev": "node index.js"
+  },
+  "dependencies": {
+    "@shopify/shopify-api": "^9.0.0",
+    "express": "^4.18.2",
+    "better-sqlite3": "^9.4.3",
+    "dotenv": "^16.3.1"
+  },
+  "engines": {
+    "node": ">=18.x"
+  }
+}

@@ -43,6 +43,7 @@ app.get("/admin", (_req, res) => {
 // ---- Cache bust endpoint — called by admin UI after save ----
 app.post("/admin/bust-cache", (req, res) => {
   const adminPassword = process.env.ADMIN_PASSWORD;
+  const authHeader = req.headers["x-admin-password"];
 
   if (!adminPassword || authHeader !== adminPassword) {
     return res.status(401).json({ error: "Unauthorised" });

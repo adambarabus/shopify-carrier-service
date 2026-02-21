@@ -4,7 +4,7 @@ const express = require("express");
 const crypto = require("crypto");
 const path = require("path");
 const fs = require("fs");
-const { calculateRates } = require("./lib/rates");
+const { calculateRates, bustConfigCache } = require("./lib/rates");
 const { fetchProduct, gidToId } = require("./lib/shopify");
 const cache = require("./lib/cache");
 
@@ -38,6 +38,18 @@ app.get("/admin", (_req, res) => {
 
   res.setHeader("Content-Type", "text/html");
   res.send(html);
+});
+
+// ---- Cache bust endpoint — called by admin UI after save ----
+app.post("/admin/bust-cache", (req, res) => {
+  const adminPassword = process.env.ADMIN_PASSWORD;
+
+  if (!adminPassword || authHeader !== adminPassword) {
+    return res.status(401).json({ error: "Unauthorised" });
+  }
+
+  bustConfigCache();
+  res.json({ ok: true });
 });
 
 // ---- Health ----

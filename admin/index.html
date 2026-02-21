@@ -156,12 +156,12 @@ const DEFAULTS = {
   shipping: {
     UK: { flat: 400, label: "Royal Mail Tracked 48", description: "Tracking number provided" },
     EU: { light: 600, heavy: 850, threshold: 350, label: "International Tracked Courier", description: "Tracking number provided. All import duties included." },
-    INTERNATIONAL: { light: 1200, heavy: 1500, threshold: 350, label: "International Tracked Courier", description: "Tracking number provided. All import duties and taxes from the UK included." },
+    INTERNATIONAL: { light: 1200, heavy: 1500, threshold: 350, label: "International Tracked Courier", description: "Tracking number provided. All import duties and taxes included. (Sorry, these are expensive to pay from the UK)" },
   },
   surcharges: {
     UK: { amount: 600, label: "Royal Mail Tracked 48 - Oversized packaging required (Vinyl + Can)", description: "Your order contains items that require a larger box." },
-    EU: { amount: 1000, label: "International Tracked Courier - Oversized packaging required (Vinyl + Can)", description: "Your order contains items that require a larger box." },
-    INTERNATIONAL: { amount: 2200, label: "International Tracked Courier - Oversized packaging required (Vinyl + Can)", description: "Your order contains items that require a larger box." },
+    EU: { amount: 1000, label: "International Tracked Courier - Oversized packaging required (Vinyl + Can)", description: "Your order contains items that require a larger box. Tracking number provided. All import duties included." },
+    INTERNATIONAL: { amount: 2200, label: "International Tracked Courier - Oversized packaging required (Vinyl + Can)", description: "International Tracked Courier - Oversized packaging required (Vinyl + Can)", description: "Your order contains items that require a larger box. Tracking number provided. All import duties and taxes included. (Sorry, these are expensive to pay from the UK)" },
   },
   packaging: { vinyl_mailer: 185, can_box: 185, cd_mailer: 50, tee_packet: 20 },
 };
@@ -312,6 +312,7 @@ async function saveAll(statusId) {
   try {
     const cfg = getConfig();
     await writeEdgeConfig([{ operation: "upsert", key: "admin_config", value: cfg }]);
+    await fetch("/admin/bust-cache", { method: "POST", headers: { "x-admin-password": ADMIN_PASSWORD } });
     statusEl.textContent = "Saved ✓";
     statusEl.className = "save-status success";
     showToast("Changes saved", "success");
